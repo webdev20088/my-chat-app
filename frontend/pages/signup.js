@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import styles from '../styles/Login.module.css'; // same styling as login
+import styles from '../styles/signup.module.css'; // same styling as login
 
 export default function Signup() {
   const [username, setUsername] = useState('');
@@ -12,7 +12,8 @@ export default function Signup() {
       setError('Fill both fields');
       return;
     }
-    const res = await fetch('http://localhost:4000/signup', {
+    const res = await fetch('https://mychatappbackend-zzhh.onrender.com/signup', {
+
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),

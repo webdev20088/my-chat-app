@@ -1,15 +1,29 @@
+/* ✅ FINAL chat.module.css */
+
 .container {
   display: flex;
-  height: 100vh;
+  height: 97vh;
   overflow: hidden;
+  background-color: #2e2c2c;
 }
 
+
 .contactSection {
-  width: 30%;
+  width: 80%;
+  height: 20%;
   padding: 10px;
   border-right: 1px solid gray;
   overflow-y: auto;
-  background: #2e2c2c;
+  background: black;
+    position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  
+  padding: 20px;
+  background-color: #706b6b;
+  border-radius: 12px;       /* Rounded corners */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); /* Float effect */
 }
 
 .contactHeader {
@@ -67,16 +81,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+  height: 10%;
 }
 
-.nametext{color: whitesmoke;}
+.nametext {
+  color: whitesmoke;
+  
+}
 
 .typingText {
   font-style: italic;
   color: #666;
   margin: 5px 0;
   font-size: smaller;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: white;
+  cursor: pointer;
+  margin-right: 10px;
 }
 
 .chatBox {
@@ -87,7 +113,7 @@
   padding: 10px;
   display: flex;
   flex-direction: column;
-  background-color: black;
+  background-image: url('backgrounds/bg.png');
 }
 
 .messageBubble {
@@ -101,7 +127,7 @@
 
 .sent {
   align-self: flex-end;
-  background-color: #d35b75;
+  background-color: rgb(96, 178, 255);
   color: white;
   text-align: left;
   border-bottom-right-radius: 0;
@@ -110,7 +136,7 @@
 
 .received {
   align-self: flex-start;
-  background-color: #d35b75;
+  background-color: #ff6385;
   color: white;
   text-align: left;
   border-bottom-left-radius: 0;
@@ -146,14 +172,13 @@
 }
 
 .button {
-  background-color: #942727; /* deep maroon */
+  background-color: #942727;
   color: white;
   border: none;
   padding: 10px 18px;
-  border-radius: 999px; /* fully rounded */
+  border-radius: 999px;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
-

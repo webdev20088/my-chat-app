@@ -1,3 +1,4 @@
+// ✅ FINAL server.js (localhost:4000)
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -6,19 +7,28 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+// ✅ CORS setup to allow your Netlify frontend
+app.use(cors({
+  origin: 'https://20years-jee-pyq.netlify.app',
+  credentials: true,
+}));
+
 app.use(express.json());
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: 'https://20years-jee-pyq.netlify.app',
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
+// ✅ Use Mongo URI from .env (Atlas or local)
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/chatapp')
+  .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.log(err));
 
 const userSchema = new mongoose.Schema({
@@ -34,20 +44,12 @@ const messageSchema = new mongoose.Schema({
   read: { type: Boolean, default: false }
 });
 
-const friendSchema = new mongoose.Schema({
-  user: String,
-  friend: String
-});
-
 const User = mongoose.model('User', userSchema);
 const Message = mongoose.model('Message', messageSchema);
-const Friend = mongoose.model('Friend', friendSchema);
 
 let onlineUsers = {};
 
 io.on('connection', (socket) => {
-  console.log('✅ User connected');
-
   socket.on('login', (username) => {
     onlineUsers[username] = socket.id;
     io.emit('onlineUsers', Object.keys(onlineUsers));
@@ -60,22 +62,18 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     for (const [username, id] of Object.entries(onlineUsers)) {
-      if (id === socket.id) {
-        delete onlineUsers[username];
-      }
+      if (id === socket.id) delete onlineUsers[username];
     }
     io.emit('onlineUsers', Object.keys(onlineUsers));
   });
 
-  socket.on('joinRoom', (room) => {
-    socket.join(room);
-  });
+  socket.on('joinRoom', (room) => socket.join(room));
 
   socket.on('sendMessage', async ({ sender, receiver, message, room }) => {
     const msg = new Message({ sender, receiver, message });
     await msg.save();
     io.to(room).emit('newMessage', msg);
-    io.emit('refreshContacts');
+    io.emit('refresh');
   });
 
   socket.on('markRead', async ({ user1, user2 }) => {
@@ -83,7 +81,7 @@ io.on('connection', (socket) => {
       { sender: user2, receiver: user1, read: false },
       { $set: { read: true } }
     );
-    io.emit('refreshContacts');
+    io.emit('refresh');
   });
 
   socket.on('typing', ({ sender, receiver, isTyping }) => {
@@ -100,16 +98,13 @@ io.on('connection', (socket) => {
     });
     io.to(`${user1}_${user2}`).emit('cleared');
     io.to(`${user2}_${user1}`).emit('cleared');
-    io.emit('refreshContacts');
   });
 });
-
-// ✅ ROUTES
 
 app.post('/signup', async (req, res) => {
   const { username, password } = req.body;
   const exists = await User.findOne({ username });
-  if (exists) return res.status(400).json({ message: 'Username already exists' });
+  if (exists) return res.status(400).json({ message: 'Username exists' });
   await new User({ username, password }).save();
   res.json({ success: true });
 });
@@ -117,43 +112,14 @@ app.post('/signup', async (req, res) => {
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username });
-  if (!user || user.password !== password) {
-    return res.status(400).json({ message: 'Invalid credentials' });
-  }
+  if (!user || user.password !== password) return res.status(400).json({ message: 'Invalid' });
   res.json({ success: true });
 });
 
 app.get('/user/:username', async (req, res) => {
   const user = await User.findOne({ username: req.params.username });
-  if (!user) return res.status(404).json({ message: 'User not found' });
+  if (!user) return res.status(404).json({ message: 'Not found' });
   res.json({ success: true });
-});
-
-app.get('/contacts/:username', async (req, res) => {
-  const { username } = req.params;
-
-  const friends = await Friend.find({ user: username });
-  const contacts = await Promise.all(friends.map(async (f) => {
-    const lastMessage = await Message.findOne({
-      $or: [
-        { sender: username, receiver: f.friend },
-        { sender: f.friend, receiver: username }
-      ]
-    }).sort({ timestamp: -1 });
-
-    return {
-      contact: f.friend,
-      lastMessage: lastMessage ?
-        (lastMessage.sender === username ? `You: ${lastMessage.message}` : lastMessage.message)
-        : '',
-      sender: lastMessage ? lastMessage.sender : '',
-      read: lastMessage ? lastMessage.read : true,
-      timestamp: lastMessage ? lastMessage.timestamp : new Date(0)
-    };
-  }));
-
-  contacts.sort((a, b) => b.timestamp - a.timestamp);
-  res.json(contacts);
 });
 
 app.get('/messages', async (req, res) => {
@@ -167,13 +133,4 @@ app.get('/messages', async (req, res) => {
   res.json(messages);
 });
 
-app.post('/friend/:user/:friend', async (req, res) => {
-  const { user, friend } = req.params;
-  const exists = await Friend.findOne({ user, friend });
-  if (!exists) {
-    await new Friend({ user, friend }).save();
-  }
-  res.json({ success: true });
-});
-
-server.listen(4000, () => console.log("✅ Server running on port 4000"));
+server.listen(4000, () => console.log('✅ Server running on port 4000'));
